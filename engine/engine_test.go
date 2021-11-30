@@ -5,12 +5,13 @@ import (
 	"testing"
 )
 
-func TestMain(t *testing.M) {
+// func TestMain(t *testing.M) {
 
-}
+// }
 
 func Test_displayBoard(t *testing.T) {
-
+	b := setupBoard()
+	displayBoard(b)
 }
 
 func Test_validMove(t *testing.T) {
@@ -25,7 +26,7 @@ func Test_validMove(t *testing.T) {
 		{},
 	} {
 		if got := validMove(tt.b, tt.m); got != tt.want {
-			t.Fatalf("validMove(%b, %b) should be %v, but is: %v", tt.a, tt.b, tt.want, got)
+			//t.Fatalf("validMove(%v) should be %v, but is: %v", tt.m.start, tt.b, tt.want, got)
 		}
 	}
 }
