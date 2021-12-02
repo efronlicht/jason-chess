@@ -125,7 +125,39 @@ func (s Square) String() string {
 }
 
 func inCheck(b Board) bool {
-	panic("Not implimented")
+	// create fake game where last player can go again to see if king is in danger
+	chkboard := b
+	if chkboard.turn == White {
+		chkboard.turn = Black
+	} else if chkboard.turn == Black {
+		chkboard.turn = White
+	} else {
+		panic("Its is no ones turn and it should be someone turn --!! error showed inCheck funciton")
+	}
+	// find the square with the king with the correct color on it loop once
+	var kloc = loc{}
+	for r := 7; r >= 0; r-- {
+		for f := 0; f < 8; f++ {
+			if b.b[f][r].kind == King && b.b[f][r].color == b.turn {
+				kloc.f, kloc.r = f, r
+				break
+			}
+		}
+	}
+	// check if any piece of the oppsite color can legally move to attack the king
+	// loop over the entire board
+	// if piece coor != b.color check it against the kings square
+	for r := 7; r >= 0; r-- {
+		for f := 0; f < 8; f++ {
+			if chkboard.b[f][r].kind != Empty && chkboard.b[f][r].color == chkboard.turn {
+				chkchk := loc{f, r}
+				m := Move{chkchk, kloc}
+				if validMove(chkboard, m) {
+					return true
+				}
+			}
+		}
+	}
 	return false
 }
 
