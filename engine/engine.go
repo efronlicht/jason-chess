@@ -81,15 +81,40 @@ func Eval(b Board, m Move) (next Board, state gameState, err error) {
 	//	if both false m we will then check to see if the game has ended
 }
 
+func listOfAllPlayerPieces(b Board) []loc {
+	pieces := []loc{}
+	for r := 0; r < 8; r++ {
+		for f := 0; f < 8; f++ {
+			if b.b[r][f].color == b.turn {
+				pieces = append(pieces, loc{r, f})
+			}
+		}
+	}
+	return pieces
+}
+
 func inCheckMate(b Board) bool {
+	pieces := listOfAllPlayerPieces(b)
 	// check every move to see if it will result in a check
-
-	// iterate though all the current player's moves checking for check each time
-
-	// if any move will result in a non check position then return false
-
+	for _, l := range pieces {
+		moves := movesFromSquare(b, l)
+		// make a move and test if current player still in check
+		for _, m := range moves { // iterate though all the current player's moves checking for check each time
+			fakeBoard := copyBoard(b)
+			fakeBoard = makeMove(fakeBoard, m)
+			if fakeBoard.turn == White {
+				fakeBoard.turn = Black
+			} else if fakeBoard.turn == Black {
+				fakeBoard.turn = White
+			}
+			// if any move will result in a non check position then return false
+			if !inCheck(fakeBoard) {
+				return false
+			}
+		}
+	}
 	// after checking all pieces and no vailid safe moves return true
-	panic("Not implimented")
+	return true
 }
 
 func isDraw(b Board) bool {
