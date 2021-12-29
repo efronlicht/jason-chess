@@ -10,9 +10,9 @@ func makeMove(b Board, m Move) Board {
 		panic(fmt.Sprintf("Cannot make invalid move: %v", err))
 	}
 	// check if this move puts current player in check
-	e := Square{}
-	square := b.b[m.start.f][m.start.r]
-	b.b[m.end.f][m.end.r] = square
+	e := Piece{}
+	piece := b.b[m.start.f][m.start.r]
+	b.b[m.end.f][m.end.r] = piece
 	b.b[m.start.f][m.start.r] = e
 	return b
 }
@@ -213,26 +213,26 @@ func setupBoard() Board {
 	b := Board{}
 	b.turn = White
 	// set White/black back rank
-	b.b[0][0] = Square{Rook, White}
-	b.b[0][7] = Square{Rook, Black}
-	b.b[1][0] = Square{Knight, White}
-	b.b[1][7] = Square{Knight, Black}
-	b.b[2][0] = Square{Bishop, White}
-	b.b[2][7] = Square{Bishop, Black}
-	b.b[3][0] = Square{Queen, White}
-	b.b[3][7] = Square{Queen, Black}
-	b.b[4][0] = Square{King, White}
-	b.b[4][7] = Square{King, Black}
-	b.b[5][0] = Square{Bishop, White}
-	b.b[5][7] = Square{Bishop, Black}
-	b.b[6][0] = Square{Knight, White}
-	b.b[6][7] = Square{Knight, Black}
-	b.b[7][0] = Square{Rook, White}
-	b.b[7][7] = Square{Rook, Black}
+	b.b[0][0] = Piece{Rook, White}
+	b.b[0][7] = Piece{Rook, Black}
+	b.b[1][0] = Piece{Knight, White}
+	b.b[1][7] = Piece{Knight, Black}
+	b.b[2][0] = Piece{Bishop, White}
+	b.b[2][7] = Piece{Bishop, Black}
+	b.b[3][0] = Piece{Queen, White}
+	b.b[3][7] = Piece{Queen, Black}
+	b.b[4][0] = Piece{King, White}
+	b.b[4][7] = Piece{King, Black}
+	b.b[5][0] = Piece{Bishop, White}
+	b.b[5][7] = Piece{Bishop, Black}
+	b.b[6][0] = Piece{Knight, White}
+	b.b[6][7] = Piece{Knight, Black}
+	b.b[7][0] = Piece{Rook, White}
+	b.b[7][7] = Piece{Rook, Black}
 	// set White/black pawns pawns
 	for i := 0; i < len(b.b); i++ {
-		b.b[i][1] = Square{Pawn, White}
-		b.b[i][6] = Square{Pawn, Black}
+		b.b[i][1] = Piece{Pawn, White}
+		b.b[i][6] = Piece{Pawn, Black}
 	}
 	return b
 }

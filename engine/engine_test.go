@@ -14,6 +14,38 @@ import (
 func Test_displayBoard(t *testing.T) {
 	b := setupBoard()
 	displayBoard(b)
+	nb := parseBoardFromString(White, "WKe2 WQa1 bnh7 bRc4")
+	displayBoard(nb)
+}
+
+func parseBoardFromString(t Color, s string) Board {
+	// example turn White
+	// example string "Wkg8 BQg7 bkg6"
+	var mp = map[string]Piece{
+		"WP": Piece{Pawn, White},
+		"WB": Piece{Bishop, White},
+		"WN": Piece{Knight, White},
+		"WR": Piece{Rook, White},
+		"WQ": Piece{Queen, White},
+		"WK": Piece{King, White},
+		"BP": Piece{Pawn, Black},
+		"BB": Piece{Bishop, Black},
+		"BN": Piece{Knight, Black},
+		"BR": Piece{Rook, Black},
+		"BQ": Piece{Queen, Black},
+		"BK": Piece{King, Black},
+	}
+	nb := Board{turn: t}
+	pieces := strings.Fields(s)
+	for _, p := range pieces {
+		piece := strings.ToUpper(p[:2])
+		loc := locFromNotation(p[2:])
+		if (mp[piece] == Piece{}) {
+			panic(fmt.Sprintf("unkonwn piece %v cannot parse", piece))
+		}
+		nb.b[loc.r][loc.f] = mp[piece]
+	}
+	return nb
 }
 
 func locFromNotation(s string) (p loc) {

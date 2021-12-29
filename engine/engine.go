@@ -5,7 +5,7 @@ import (
 )
 
 type Board struct {
-	b    [8][8]Square
+	b    [8][8]Piece
 	turn Color
 }
 
@@ -44,9 +44,9 @@ const (
 	White Color = 2
 )
 
-// Square is a white piece, a black piece, or empty.
+// Piece is a white piece, a black piece, or empty.
 // The zero value is the empty square.
-type Square struct {
+type Piece struct {
 	kind  Kind
 	color Color
 }
@@ -118,11 +118,22 @@ func inCheckMate(b Board) bool {
 }
 
 func isDraw(b Board) bool {
-	panic("Not implimented")
+	// chk for stalemate
+	if stalemate(b) {
+		return true
+	}
+	// chk for rep of possition NEed make changes for the not part of mvp
+	// check for 50 moves without taking a piece
+	// not enough pieces to mate
+	return false
+}
+
+func stalemate(b Board) bool {
+	panic("not yet implimented")
 }
 
 func (b Board) String() string {
-	out := ""
+	out := " "
 	for r := 7; r >= 0; r-- {
 		for f := 0; f < 8; f++ {
 			out += b.b[f][r].String()
@@ -132,9 +143,9 @@ func (b Board) String() string {
 	return out
 }
 
-func (s Square) String() string {
+func (s Piece) String() string {
 	if s.color == 0 && s.kind == 0 {
-		return "   "
+		return fmt.Sprintf("%3v", "")
 	}
 	switch s.color {
 	default:
@@ -146,17 +157,17 @@ func (s Square) String() string {
 			panic("White square with no piece, check piece moving code")
 			// this is an error, since the Empty kind is only OK for the zero value, which we already handled.
 		case Pawn:
-			return " ♙ "
+			return fmt.Sprintf("%3v", "♙")
 		case Bishop:
-			return " ♗ "
+			return fmt.Sprintf("%3v", "♗")
 		case Knight:
-			return " ♘ "
+			return fmt.Sprintf("%3v", "♘")
 		case Queen:
-			return " ♕ "
+			return fmt.Sprintf("%3v", "♕")
 		case King:
-			return " ♔ "
+			return fmt.Sprintf("%3v", "♔")
 		case Rook:
-			return " ♖ "
+			return fmt.Sprintf("%3v", "♖")
 		}
 	case Black:
 		switch s.kind {
@@ -164,17 +175,17 @@ func (s Square) String() string {
 			panic("Black piece sqare with no piece, check moving code")
 			// this is an error, since the Empty kind is only OK for the zero value, which we already handled.
 		case Pawn:
-			return " ♟ "
+			return fmt.Sprintf("%3v", "♟")
 		case Bishop:
-			return " ♝ "
+			return fmt.Sprintf("%3v", "♝")
 		case Knight:
-			return " ♞ "
+			return fmt.Sprintf("%3v", "♞")
 		case Queen:
-			return " ♛ "
+			return fmt.Sprintf("%3v", "♛")
 		case King:
-			return " ♚ "
+			return fmt.Sprintf("%3v", "♚")
 		case Rook:
-			return " ♜ "
+			return fmt.Sprintf("%3v", "♜")
 		}
 	}
 }
