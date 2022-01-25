@@ -56,22 +56,30 @@ func validRook(b Board, m Move) error {
 	if m.start.f != m.end.f && m.start.r != m.end.r {
 		return errors.New("rooks may only move in strait lines")
 	}
-	var dx, dy int
+	var df, dr int
 	switch {
 	default:
 		return errors.New("impossible rook Possition")
 	case m.end.f == m.start.f && m.end.r > m.start.r:
-		dx, dy = 0, 1
+		df, dr = 0, 1
 	case m.end.f == m.start.f && m.end.r < m.start.r:
-		dx, dy = 0, -1
+		df, dr = 0, -1
 	case m.end.r == m.start.r && m.end.f > m.start.f:
-		dx, dy = 1, 0
+		df, dr = 1, 0
 	case m.end.r == m.start.r && m.end.f < m.start.f:
-		dx, dy = -1, 0
+		df, dr = -1, 0
 	}
-	for f, r := m.start.f, m.start.r; f != m.end.f; f, r = f+dx, r+dy { // step and check for pieces
-		if b.b[f][r].kind != Empty {
-			return errors.New("rooks may not jump over other pieces")
+	if df != 0 {
+		for f, r := m.start.f, m.start.r; f != m.end.f; f, r = f+df, r+dr { // step and check for pieces
+			if b.b[f][r].kind != Empty {
+				return errors.New("rooks may not jump over other pieces")
+			}
+		}
+	} else {
+		for f, r := m.start.f, m.start.r; r != m.end.r; f, r = f+df, r+dr { // step and check for pieces
+			if b.b[f][r].kind != Empty {
+				return errors.New("rooks may not jump over other pieces")
+			}
 		}
 	}
 	return nil
@@ -81,20 +89,20 @@ func validBishop(b Board, m Move) error {
 	if abs(m.start.f-m.end.f) != abs(m.start.r-m.end.r) {
 		return errors.New("this piece may only move diagnol")
 	}
-	var dx, dy int
+	var df, dr int
 	switch {
 	default:
 		return errors.New("impossible bishop possition")
 	case m.end.f > m.start.f && m.end.r > m.start.r:
-		dx, dy = 1, 1
+		df, dr = 1, 1
 	case m.end.f > m.start.f && m.end.r < m.start.r:
-		dx, dy = 1, -1
+		df, dr = 1, -1
 	case m.end.f < m.start.f && m.end.r > m.start.r:
-		dx, dy = -1, 1
+		df, dr = -1, 1
 	case m.end.f < m.start.f && m.end.r < m.start.r:
-		dx, dy = -1, -1
+		df, dr = -1, -1
 	}
-	for f, r := m.start.f, m.start.r; f != m.end.f; f, r = f+dx, r+dy { // step and check for pieces
+	for f, r := m.start.f, m.start.r; f != m.end.f; f, r = f+df, r+dr { // step and check for pieces
 		if b.b[f][r].kind != Empty {
 			return errors.New("this piece may not jump over pieces")
 		}
@@ -131,8 +139,15 @@ func grabValidPieceFunction(p Kind) func(Board, Move) bool {
 	}
 }
 
+func (p Piece) IsEmpty() bool {
+	return p.color == 0 && p.kind == Empty
+}
+
 func movesFromSquare(b Board, l loc) (moves []Move) {
 	s := b.b[l.r][l.f]
+	if s.IsEmpty() { // not a piece, so it can't move.
+		return nil
+	}
 	vaildMvChk := grabValidPieceFunction(s.kind)
 	for y := 0; y < 8; y++ {
 		for x := 0; x < 8; x++ {

@@ -18,23 +18,24 @@ func Test_displayBoard(t *testing.T) {
 	displayBoard(nb)
 }
 
+var mp = map[string]Piece{
+	"WP": {Pawn, White},
+	"WB": {Bishop, White},
+	"WN": {Knight, White},
+	"WR": {Rook, White},
+	"WQ": {Queen, White},
+	"WK": {King, White},
+	"BP": {Pawn, Black},
+	"BB": {Bishop, Black},
+	"BN": {Knight, Black},
+	"BR": {Rook, Black},
+	"BQ": {Queen, Black},
+	"BK": {King, Black},
+}
+
 func parseBoardFromString(t Color, s string) Board {
 	// example turn White
 	// example string "Wkg8 BQg7 bkg6"
-	var mp = map[string]Piece{
-		"WP": Piece{Pawn, White},
-		"WB": Piece{Bishop, White},
-		"WN": Piece{Knight, White},
-		"WR": Piece{Rook, White},
-		"WQ": Piece{Queen, White},
-		"WK": Piece{King, White},
-		"BP": Piece{Pawn, Black},
-		"BB": Piece{Bishop, Black},
-		"BN": Piece{Knight, Black},
-		"BR": Piece{Rook, Black},
-		"BQ": Piece{Queen, Black},
-		"BK": Piece{King, Black},
-	}
 	nb := Board{turn: t}
 	pieces := strings.Fields(s)
 	for _, p := range pieces {
@@ -43,8 +44,9 @@ func parseBoardFromString(t Color, s string) Board {
 		if (mp[piece] == Piece{}) {
 			panic(fmt.Sprintf("unkonwn piece %v cannot parse", piece))
 		}
-		nb.b[loc.r][loc.f] = mp[piece]
+		nb.b[loc.f][loc.r] = mp[piece]
 	}
+
 	return nb
 }
 
@@ -65,16 +67,17 @@ func locFromNotation(s string) (p loc) {
 	}
 	return p
 }
+
 func moveFromNotation(s string) (m Move) {
 	split := strings.Fields(s)
 	return Move{
 		start: locFromNotation(split[0]),
 		end:   locFromNotation(split[1]),
 	}
-
 }
+
 func Test_validMove(t *testing.T) {
-	type test = struct {
+	type test struct {
 		name  string
 		board Board
 		move  Move
@@ -111,10 +114,10 @@ func Test_validMove(t *testing.T) {
 			"Queen h6": "d1 h5",
 			"rook a7":  "a1 a7",
 		} {
-			if validMove(setupBoard(), moveFromNotation(move)) == nil {
+			b := setupBoard()
+			if validMove(b, moveFromNotation(move)) == nil {
 				t.Errorf("%s: %s", name, move)
 			}
-
 		}
 	})
 }
@@ -136,4 +139,61 @@ func Test_Create_Game(t *testing.T) {
 	TODO: the response body should have the default chessboard. 
 	We should also figure out a way to get the GAME ID.`,
 	)
+}
+
+type test struct {
+	name  string
+	input string
+	want  string
+}
+
+func Test_EndingPositions(t *testing.T) {
+	t.Run("black to move: white checkmate", func(t *testing.T) {
+		for _, notation := range []string{
+			"Bkh8 Wkg6 Wqh7", "Bke8 wra8 wrc7 wkc2", "wke6 bke8 wra8",
+		} {
+			board := parseBoardFromString(Black, notation)
+			if !inCheckMate(board, Black) {
+				t.Errorf("expected white checkmate\n%s", board)
+			}
+		}
+	})
+	t.Run("white to move: black checkmate", func(t *testing.T) {
+		for _, notation := range []string{
+			"Bka6 brg1 bqh8 wkh4", "wkd1 bkc3 bnd3 bbf3", "wkd1 bkd3 bbd2 bne3",
+		} {
+			board := parseBoardFromString(White, notation)
+			if !inCheckMate(board, White) {
+				t.Errorf("expected white checkmate\n%s", board)
+			}
+		}
+	})
+	t.Run("white to move: check but not checkmate", func(t *testing.T) {
+		for _, notation := range []string{
+			// TODO
+		} {
+			board := parseBoardFromString(Black, notation)
+			if check, mate := inCheck(board, White), inCheckMate(board, White); !check || mate {
+				t.Errorf("expected black to be in check (%v) but NOT in checkmate (%v) \n%s", check, mate, board)
+			}
+		}
+	})
+	t.Run("black to move: check but not checkmate", func(t *testing.T) {
+		for _, notation := range []string{
+			// TODO
+		} {
+			board := parseBoardFromString(Black, notation)
+			if check, mate := inCheck(board, Black), inCheckMate(board, Black); !check || mate {
+				t.Errorf("expected black to be in check (%v) but NOT in checkmate (%v) \n%s", check, mate, board)
+			}
+		}
+	})
+}
+
+var boardStates = map[string][]string{
+	"simple WCM":  {"Bkh8 Wkg6 Wqh7", "Bke8 wra8 wrc7 wkc2", "wke6 bke8 wra8"},
+	"simple WSM":  {"Bkh8 Wqh6 WKb5", "Bkh8 Wqh6 WKb5 wpd5 bpd6", "Bkh8 Wqh6 WKb5 wpd5 bpd6 bpe7 wpe6 bpb6 bpa7 bnc8 wpa6"},
+	"simple BCM":  {"Bka6 brg1 bqh8 wkh4", "wkd1 bkc3 bnd3 bbf3", "wkd1 bkd3 bbd2 bne3"},
+	"simple BSM":  {""},
+	"complex WSM": {"bkd3 wkh1", "bkd3 wkh1 bnf7", "bkd3 wkh1 bbf7"},
 }

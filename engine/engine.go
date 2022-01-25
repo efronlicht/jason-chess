@@ -1,7 +1,10 @@
 package engine
 
 import (
+	"bytes"
 	"fmt"
+	"log"
+	"text/tabwriter"
 )
 
 type Board struct {
@@ -44,6 +47,15 @@ const (
 	White Color = 2
 )
 
+func (c Color) other() Color {
+	if c == Black {
+		return White
+	} else if c == White {
+		return Black
+	}
+	panic("cannot call other on a non color")
+}
+
 // Piece is a white piece, a black piece, or empty.
 // The zero value is the empty square.
 type Piece struct {
@@ -59,7 +71,7 @@ func abs(a int) int {
 }
 
 // Evaluate a board position.
-func Eval(b Board, m Move) (next Board, state gameState, err error) {
+func Eval(b Board, m Move, turn Color) (next Board, state gameState, err error) {
 	// 1: check to see if the move is vaild
 	err = validMove(b, m)
 	if err != nil {
@@ -70,22 +82,22 @@ func Eval(b Board, m Move) (next Board, state gameState, err error) {
 	nBoard := makeMove(b, m)
 	chkNBoard := nBoard
 	chkNBoard.turn = b.turn
-	if inCheck(chkNBoard) {
+	if inCheck(chkNBoard, turn) {
 		return b, Active, fmt.Errorf("cannot move into check")
-	} else if inCheckMate(nBoard) {
+	} else if inCheckMate(nBoard, turn) {
 		return nBoard, Checkmate, nil
-	} else if isDraw(nBoard) {
+	} else if isDraw(nBoard, turn) {
 		return nBoard, Stalemate, nil
 	}
 	return nBoard, Active, nil
 	//	if both false m we will then check to see if the game has ended
 }
 
-func listOfAllPlayerPieces(b Board) []loc {
+func listOfAllPlayerPieces(b Board, color Color) []loc {
 	pieces := []loc{}
 	for r := 0; r < 8; r++ {
 		for f := 0; f < 8; f++ {
-			if b.b[r][f].color == b.turn {
+			if b.b[r][f].color == color {
 				pieces = append(pieces, loc{r, f})
 			}
 		}
@@ -93,8 +105,8 @@ func listOfAllPlayerPieces(b Board) []loc {
 	return pieces
 }
 
-func inCheckMate(b Board) bool {
-	pieces := listOfAllPlayerPieces(b)
+func inCheckMate(b Board, threttened Color) bool {
+	pieces := listOfAllPlayerPieces(b, threttened)
 	// check every move to see if it will result in a check
 	for _, l := range pieces {
 		moves := movesFromSquare(b, l)
@@ -102,13 +114,9 @@ func inCheckMate(b Board) bool {
 		for _, m := range moves { // iterate though all the current player's moves checking for check each time
 			fakeBoard := copyBoard(b)
 			fakeBoard = makeMove(fakeBoard, m)
-			if fakeBoard.turn == White {
-				fakeBoard.turn = Black
-			} else if fakeBoard.turn == Black {
-				fakeBoard.turn = White
-			}
 			// if any move will result in a non check position then return false
-			if !inCheck(fakeBoard) {
+			if !inCheck(fakeBoard, threttened) {
+				log.Printf(fakeBoard.String())
 				return false
 			}
 		}
@@ -117,7 +125,7 @@ func inCheckMate(b Board) bool {
 	return true
 }
 
-func isDraw(b Board) bool {
+func isDraw(b Board, turn Color) bool {
 	// chk for stalemate
 	if stalemate(b) {
 		return true
@@ -133,19 +141,31 @@ func stalemate(b Board) bool {
 }
 
 func (b Board) String() string {
-	out := " "
+	buf := new(bytes.Buffer)
+	tw := tabwriter.NewWriter(buf, 1, 1, 0, ' ', 0)
+	tw.Write([]byte("\n"))
 	for r := 7; r >= 0; r-- {
 		for f := 0; f < 8; f++ {
-			out += b.b[f][r].String()
+			// empty squares are colored black or white
+			if (b.b[f][r] == Piece{}) {
+				if (f+r)%2 == 0 {
+					tw.Write([]byte("■"))
+				} else {
+					tw.Write([]byte("□"))
+				}
+			}
+			tw.Write([]byte(b.b[f][r].String()))
+			tw.Write([]byte("\t"))
 		}
-		out += "\n"
+		tw.Write([]byte("\n"))
 	}
-	return out
+	tw.Flush()
+	return buf.String()
 }
 
 func (s Piece) String() string {
 	if s.color == 0 && s.kind == 0 {
-		return fmt.Sprintf("%3v", "")
+		return " "
 	}
 	switch s.color {
 	default:
@@ -157,17 +177,17 @@ func (s Piece) String() string {
 			panic("White square with no piece, check piece moving code")
 			// this is an error, since the Empty kind is only OK for the zero value, which we already handled.
 		case Pawn:
-			return fmt.Sprintf("%3v", "♙")
+			return "♙"
 		case Bishop:
-			return fmt.Sprintf("%3v", "♗")
+			return "♗"
 		case Knight:
-			return fmt.Sprintf("%3v", "♘")
+			return "♘"
 		case Queen:
-			return fmt.Sprintf("%3v", "♕")
+			return "♕"
 		case King:
-			return fmt.Sprintf("%3v", "♔")
+			return "♔"
 		case Rook:
-			return fmt.Sprintf("%3v", "♖")
+			return "♖"
 		}
 	case Black:
 		switch s.kind {
@@ -175,58 +195,69 @@ func (s Piece) String() string {
 			panic("Black piece sqare with no piece, check moving code")
 			// this is an error, since the Empty kind is only OK for the zero value, which we already handled.
 		case Pawn:
-			return fmt.Sprintf("%3v", "♟")
+			return "♟"
 		case Bishop:
-			return fmt.Sprintf("%3v", "♝")
+			return "♝"
 		case Knight:
-			return fmt.Sprintf("%3v", "♞")
+			return "♞"
 		case Queen:
-			return fmt.Sprintf("%3v", "♛")
+			return "♛"
 		case King:
-			return fmt.Sprintf("%3v", "♚")
+			return "♚"
 		case Rook:
-			return fmt.Sprintf("%3v", "♜")
+			return "♜"
 		}
 	}
 }
 
-func inCheck(b Board) bool {
+// EFRON NOTE: no need to use this, but it might help.
+/*
+func (c Color) Enemy() Color {
+	switch c {
+	case White:
+		return Black
+	case Black:
+		return White
+	default:
+		panic(fmt.Errorf("no enemy color for unknown color %d",c))
+	}
+}
+*/
+
+func inCheck(b Board, inThreat Color) bool {
 	// create fake game where last player can go again to see if king is in danger
 	chkboard := copyBoard(b)
-	if chkboard.turn == White {
-		chkboard.turn = Black
-	} else if chkboard.turn == Black {
-		chkboard.turn = White
-	} else {
-		panic("Its is no ones turn and it should be someone turn --!! error showed inCheck funciton")
-	}
+
 	// find the square with the king with the correct color on it loop once
-	var kloc = loc{}
+	var kloc loc
 	for r := 7; r >= 0; r-- {
 		for f := 0; f < 8; f++ {
-			if b.b[f][r].kind == King && b.b[f][r].color == b.turn {
+			if b.b[f][r].kind == King && b.b[f][r].color == inThreat {
 				kloc.f, kloc.r = f, r
 				break
 			}
 		}
+		// EFRON NOTE: what if you don't find the king?
+		if r == 0 {
+			panic(fmt.Sprintf("no king %v on board", inThreat))
+		}
 	}
+
 	// check if any piece of the oppsite color can legally move to attack the king
 	// loop over the entire board
 	// if piece coor != b.color check it against the kings square
-	for r := 7; r >= 0; r-- {
-		for f := 0; f < 8; f++ {
-			if chkboard.b[f][r].kind != Empty && chkboard.b[f][r].color == chkboard.turn {
-				chkchk := loc{f, r}
-				m := Move{chkchk, kloc}
-				if validMove(chkboard, m) == nil {
-					return true
-				}
-			}
+
+	pieces := listOfAllPlayerPieces(chkboard, inThreat.other())
+	for _, p := range pieces {
+		m := Move{p, kloc}
+		if validMove(chkboard, m) == nil {
+			return true
 		}
 	}
 	return false
 }
 
+// EFRON NOTE: this function isn't necessary.
 func copyBoard(b Board) Board {
 	copy := b
 	return copy
